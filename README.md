@@ -1,6 +1,18 @@
 # textlint-rule-ja-era-ad-mismatch
 
-This textlint rule detects mismatches between Japanese era names (Gengo) and western calendar years (Anno Domini).
+この[textlint](https://github.com/textlint/textlint "textlint")ルールは、文書中の和暦と西暦が正しく対応しているかを検証します。
+
+OK:
+```
+平成12年(2000年)
+2000年(平成12年)
+```
+NG:
+```
+2016年(平成12年)
+平成11年(2000年)
+```
+
 
 ## Install
 
