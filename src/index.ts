@@ -1,7 +1,9 @@
 import type { TextlintRuleModule , TextlintRuleErrorDetails } from "@textlint/types";
 
-const AD_TO_ERA_PATTERN = /([0-9０-９]+)年[（(](明治|大正|昭和|平成|令和)([0-9０-９]+)年[）)]\s*/gi;
-const ERA_TO_AD_PATTERN = /(明治|大正|昭和|平成|令和)([0-9０-９]+)年[(（]([0-9０-９]+)年[）)]\s*/gi;
+// pattern : 2024年(令和6年)
+const AD_TO_ERA_PATTERN = /([0-9０-９]+)年[（(](明治|大正|昭和|平成|令和)(元|[0-9０-９]+)年[）)]\s*/gi;
+// pattern : 令和6年(2024年)
+const ERA_TO_AD_PATTERN = /(明治|大正|昭和|平成|令和)(元|[0-9０-９]+)年[(（]([0-9０-９]+)年[）)]\s*/gi;
 
 const ERA_AND_AD_RANGE_LIST = [
     { eraName: '令和', startAdYear: 2019, endEraYear: 9999 },
@@ -30,15 +32,24 @@ type MatchHandler = [RegExp, (match: RegExpExecArray) => EraAndAdInfo];
 
 const validateEraAndAdMatch = ({ matchedText , eraName, eraYear, adYear }: EraAndAdInfo): ValidationResult => {
 
-    const eraYearNum = Number(eraYear);
+    if( eraYear === '0' ) {
+        const firstIndex = matchedText.indexOf(eraName + eraYear + '年');
+        const lastIndex = firstIndex + (eraName + eraYear + '年').length;
+        return {
+            errorMessage: `${eraName}${eraYear}年は正しくない表記です。元号の初年度は「元年」と表記します。`,
+            isValid: false,
+            range: [firstIndex, lastIndex],
+            replaceText: `${eraName}元年`,
+        }
+    }
+
+    const eraYearNum = `${eraYear}年` === '元年' ? 1 : Number(eraYear);
     const adYearNum = Number(adYear);
 
     if(isNaN(eraYearNum) || isNaN(adYearNum)) {
         return { errorMessage: '', isValid: true };
     }
 
-
-    //西暦・和暦情報を取得
     const eraDetail = ERA_AND_AD_RANGE_LIST.find(detail => detail.eraName === eraName);
 
     if (!eraDetail) {
